@@ -1,0 +1,99 @@
+Dim sourceSheet As Worksheet
+Dim destinationSheet As Worksheet
+Dim myArray() As Variant
+Dim myArrayCell() As Variant
+Dim i, i2 As Long
+Private Sub Workbook_Open()
+Dim count As Integer
+Dim rng As Range
+Dim cell As Range
+i = 0
+i2 = 0
+count = WorksheetFunction.CountA(Worksheets("DM2024").Range("R:R")) - 1
+Set sourceSheet = Worksheets("DM2024")
+Set destinationSheet = Worksheets("SPREAD M ALL")
+count = WorksheetFunction.CountA(sourceSheet.Range("R:R")) + 11
+ReDim myArrayCell(0 To count - 1)
+Set rng = Range("R11:R" & count)
+getData
+For Each cell In rng
+    If IsError(cell.Value) Then
+    Else
+        Dim chk As Boolean
+        chk = False
+        If i2 > 0 Then
+           Dim countArr As Integer
+           countArr = IsInArray2(cell.Value, myArrayCell)
+           If countArr = 0 Then
+                chk = False
+           Else
+                sourceSheet.Cells(cell.Row, cell.Column + 4).Value = countArr
+                chk = True
+           End If
+        Else
+             chk = False
+        End If
+        If chk = False Then
+            Dim j, k As Integer
+            k = 0
+             For j = 0 To i - 1
+                 Dim myArray2() As String
+                 myArray2 = Split(myArray(j), " ")
+                If UBound(myArray2) > 0 And myArray2(0) = cell.Value Then
+                    k = k + 1
+                End If
+             Next j
+            sourceSheet.Cells(cell.Row, cell.Column + 4).Value = k
+            myArrayCell(i2) = cell.Value & " " & k
+            i2 = i2 + 1
+        End If
+    End If
+Next
+End Sub
+Private Sub getData()
+    Dim rng As Range
+    Dim count2 As Integer
+    count2 = WorksheetFunction.CountA(destinationSheet.Range("D:D")) + 4
+    Set rng = destinationSheet.Range("AA6:AA" & count2)
+    ReDim myArray(0 To count2 - 1)
+    For Each cell In rng
+    If Not IsError(cell.Value) And Len(cell.Value) > 2 Then
+        If UCase(Left(cell.Value, 2)) = "VN" Or UCase(Left(cell.Value, 2)) = "MC" Then
+            If IsNumeric(Right(Left(cell.Value, 3), 1)) Then
+                If Not IsError(destinationSheet.Cells(cell.Row, 4)) Then
+                    Dim cell2 As String
+                    cell2 = destinationSheet.Cells(cell.Row, 4)
+                        Dim cell3 As String
+                        cell3 = cell2 & " " & cell.Value
+                        If Not IsInArray(cell3, myArray) Then
+                            myArray(i) = cell2 & " " & cell.Value
+                            i = i + 1
+                        End If
+                End If
+            End If
+        End If
+    End If
+    Next cell
+End Sub
+Function IsInArray(item As Variant, arr As Variant) As Boolean
+    Dim i As Long
+    For i = LBound(arr) To UBound(arr)
+        If arr(i) = item Then
+            IsInArray = True
+            Exit Function
+        End If
+    Next i
+    IsInArray = False
+End Function
+Function IsInArray2(item As Variant, arr As Variant) As Integer
+    Dim i As Long
+    For i = 0 To i2 - 1
+        If UBound(Split(arr(i), " ")) > 0 Then
+            If Split(arr(i), " ")(0) = item Then
+                IsInArray2 = Split(arr(i), " ")(1)
+                Exit Function
+            End If
+        End If
+    Next i
+    IsInArray2 = 0
+End Function
